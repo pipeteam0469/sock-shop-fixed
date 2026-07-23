@@ -67,22 +67,19 @@ pipeline {
                 }
             }
         }
-        stage("Deploy to Kubernetes") {
+        stage("Deploy to Kubernetes" ) {
             steps {
                 script {
-                    sh "export KUBECONFIG=/var/lib/jenkins/.kube/config"
-                    // Deploy Front-End
-                    sh "kubectl apply -f front-end-deployment.yaml"
-                    // Deploy Catalogue
-                    sh "kubectl apply -f catalogue-deployment.yaml"
-                    // Deploy Catalogue DB
-                    sh "kubectl apply -f catalogue-db-deployment.yaml"
-                    // Deploy User
-                    sh "kubectl apply -f user-deployment.yaml"
-                    // Deploy User DB
-                    sh "kubectl apply -f user-db-deployment.yaml"
-                    // Deploy Payment
-                    sh "kubectl apply -f payment-deployment.yaml"
+                    sh '''
+                        export KUBECONFIG=/var/lib/jenkins/.kube/config
+                        echo "Deploying to Kubernetes cluster at $(kubectl config view --minify --output 'jsonpath={..server}')..."
+                        kubectl apply -f front-end-deployment.yaml
+                        kubectl apply -f catalogue-deployment.yaml
+                        kubectl apply -f catalogue-db-deployment.yaml
+                        kubectl apply -f user-deployment.yaml
+                        kubectl apply -f user-db-deployment.yaml
+                        kubectl apply -f payment-deployment.yaml
+                    '''
                 }
             }
         }
