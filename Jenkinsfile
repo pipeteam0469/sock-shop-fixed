@@ -90,8 +90,12 @@ pipeline {
         failure {
             script {
                 // Concatenate all Trivy reports for AI analysis
-                sh "cat trivy-front-end.txt trivy-catalogue.txt trivy-user.txt trivy-payment.txt > combined-trivy-report.txt"
+                // sh "cat trivy-front-end.txt trivy-catalogue.txt trivy-user.txt trivy-payment.txt > combined-trivy-report.txt"
                 sh "tail -n 200 combined-trivy-report.txt | python3 ai/analyzer.py"
+                sh "cat trivy-front-end.txt > combined-trivy-report.txt 2>/dev/null || echo 'No trivy report' > combined-trivy-report.txt"
+                sh "cat trivy-catalogue.txt >> combined-trivy-report.txt 2>/dev/null || true"
+                sh "cat trivy-user.txt >> combined-trivy-report.txt 2>/dev/null || true"
+                sh "cat trivy-payment.txt >> combined-trivy-report.txt 2>/dev/null || true"
             }
         }
     }
