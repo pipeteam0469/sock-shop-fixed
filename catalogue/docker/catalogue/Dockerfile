@@ -9,15 +9,14 @@ WORKDIR /app
 # Copy dependency files
 COPY go.mod ./
 
-# Download dependencies
-RUN go mod tidy
-
 # Copy source code
 COPY main.go ./
 
+# Download dependencies
+RUN go mod tidy
+
 # Build the binary
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /catalogue main.go
-
 # Production stage
 FROM alpine:3.19
 
