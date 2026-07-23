@@ -1,7 +1,7 @@
 # Front-end: Hardened Node.js Dockerfile
 # Uses a minimal non-root multi-stage build to reduce attack surface
 
-FROM node:20-alpine AS builder
+FROM node:20.16-alpine AS builder
 
 WORKDIR /app
 
