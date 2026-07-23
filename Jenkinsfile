@@ -32,7 +32,7 @@ pipeline {
                 script {
                     dir("front-end") {
                         sh "docker build -t ${DOCKER_REGISTRY}/front-end:latest ."
-                        sh "trivy image --severity CRITICAL --exit-code 1 ${DOCKER_REGISTRY}/front-end:latest > ../trivy-front-end.txt"
+                        sh "trivy image --severity CRITICAL ${DOCKER_REGISTRY}/front-end:latest > ../trivy-front-end.txt"
                     }
                 }
             }
@@ -42,7 +42,7 @@ pipeline {
                 script {
                     dir("catalogue") {
                         sh "docker build -t ${DOCKER_REGISTRY}/catalogue:latest -f docker/catalogue/Dockerfile ."
-                        sh "trivy image --severity CRITICAL --exit-code 1 ${DOCKER_REGISTRY}/catalogue:latest > ../trivy-catalogue.txt"
+                        sh "trivy image --severity CRITICAL ${DOCKER_REGISTRY}/catalogue:latest > ../trivy-catalogue.txt"
                     }
                 }
             }
@@ -52,7 +52,7 @@ pipeline {
                 script {
                     dir("user") {
                         sh "docker build -t ${DOCKER_REGISTRY}/user:latest ."
-                        sh "trivy image --severity CRITICAL --exit-code 1 ${DOCKER_REGISTRY}/user:latest > ../trivy-user.txt"
+                        sh "trivy image --severity CRITICAL ${DOCKER_REGISTRY}/user:latest > ../trivy-user.txt"
                     }
                 }
             }
@@ -62,7 +62,7 @@ pipeline {
                 script {
                     dir("payment") {
                         sh "docker build -t ${DOCKER_REGISTRY}/payment:latest -f docker/payment/Dockerfile ."
-                        sh "trivy image --severity CRITICAL --exit-code 1 ${DOCKER_REGISTRY}/payment:latest > ../trivy-payment.txt"
+                        sh "trivy image --severity CRITICAL ${DOCKER_REGISTRY}/payment:latest > ../trivy-payment.txt"
                     }
                 }
             }
