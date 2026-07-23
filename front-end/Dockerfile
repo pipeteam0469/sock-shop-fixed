@@ -1,7 +1,7 @@
 # Front-end: Hardened Node.js Dockerfile
 # Uses a minimal non-root multi-stage build to reduce attack surface
 
-FROM node:20.16-alpine AS builder
+FROM node:20-alpine3.21 AS builder
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ COPY package.json ./
 RUN npm install --production
 
 # Production stage - minimal image
-FROM node:20-alpine
+FROM node:20-alpine3.21
 
 # Security: run as non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
