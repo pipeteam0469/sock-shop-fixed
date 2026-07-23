@@ -10,7 +10,7 @@ WORKDIR /app
 COPY go.mod ./
 
 # Download dependencies
-RUN go mod download || true
+RUN go mod tidy
 
 # Copy source code
 COPY main.go ./
