@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalogue-db
+  labels:
+    app: catalogue-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalogue-db
+  template:
+    metadata:
+      labels:
+        app: catalogue-db
+    spec:
+      containers:
+      - name: catalogue-db
+        image: mongo:4.4
+        ports:
+        - containerPort: 27017
+        volumeMounts:
+        - name: catalogue-db-storage
+          mountPath: /data/db
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false # MongoDB needs to write to its data directory
+          runAsNonRoot: false # MongoDB image typically runs as root initially
+          capabilities:
+            drop:
+              - ALL
+      volumes:
+      - name: catalogue-db-storage
+        persistentVolumeClaim:
+          claimName: catalogue-db-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalogue-db
+  labels:
+    app: catalogue-db
+spec:
+  ports:
+  - port: 27017
+    targetPort: 27017
+    protocol: TCP
+  selector:
+    app: catalogue-db
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: catalogue-db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

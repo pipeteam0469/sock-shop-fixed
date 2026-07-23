@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sock Shop - Hardened</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        header { background: #333; color: white; padding: 15px 20px; margin: -20px -20px 20px -20px; }
+        header h1 { margin: 0; }
+        nav a { color: white; margin-right: 15px; text-decoration: none; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .product-card { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .product-card h3 { margin-top: 0; color: #333; }
+        .product-card .price { color: #2ecc71; font-weight: bold; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Sock Shop</h1>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/cart">Cart</a>
+            <a href="/login">Login</a>
+            <a href="/register">Register</a>
+        </nav>
+    </header>
+    <h2>Our Products</h2>
+    <% if (products.length > 0) { %>
+        <div class="product-grid">
+            <% products.forEach(function(product) { %>
+                <div class="product-card">
+                    <h3><%= product.name %></h3>
+                    <p class="price">$<%= product.price ? product.price.toFixed(2) : '0.00' %></p>
+                    <a href="/detail/<%= product._id || product.id %>">View Details</a>
+                </div>
+            <% }); %>
+        </div>
+    <% } else { %>
+        <p>No products available. The catalogue service may not be running.</p>
+    <% } %>
+</body>
+</html>
