@@ -70,6 +70,7 @@ pipeline {
         stage("Deploy to Kubernetes") {
             steps {
                 script {
+                    sh "export KUBECONFIG=/var/lib/jenkins/.kube/config"
                     // Deploy Front-End
                     sh "kubectl apply -f front-end-deployment.yaml"
                     // Deploy Catalogue
