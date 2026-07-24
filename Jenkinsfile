@@ -79,6 +79,13 @@ pipeline {
                         kubectl apply -f user-deployment.yaml
                         kubectl apply -f user-db-deployment.yaml
                         kubectl apply -f payment-deployment.yaml
+                        # Force pods to restart and pull latest images
+                        kubectl rollout restart deployment/front-end
+                        kubectl rollout restart deployment/catalogue
+                        kubectl rollout restart deployment/catalogue-db
+                        kubectl rollout restart deployment/user
+                        kubectl rollout restart deployment/user-db
+                        kubectl rollout restart deployment/payment
                     '''
                 }
             }
@@ -90,11 +97,12 @@ pipeline {
                 // Concatenate all Trivy reports for AI analysis
                 // sh "cat trivy-front-end.txt trivy-catalogue.txt trivy-user.txt trivy-payment.txt > combined-trivy-report.txt"
                 // sh "tail -n 200 combined-trivy-report.txt | python3 ai/analyzer.py"
-                sh "tail -n 200 combined-trivy-report.txt | python3 ai/analyzer.py || echo 'AI analysis skipped - quota exceeded or unavailable'"
                 sh "cat trivy-front-end.txt > combined-trivy-report.txt 2>/dev/null || echo 'No trivy report' > combined-trivy-report.txt"
                 sh "cat trivy-catalogue.txt >> combined-trivy-report.txt 2>/dev/null || true"
                 sh "cat trivy-user.txt >> combined-trivy-report.txt 2>/dev/null || true"
                 sh "cat trivy-payment.txt >> combined-trivy-report.txt 2>/dev/null || true"
+                // Then run AI analysis
+                sh "tail -n 200 combined-trivy-report.txt | python3 ai/analyzer.py || echo 'AI analysis skipped - quota exceeded or unavailable'"
             }
         }
     }
