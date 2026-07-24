@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: catalogue
-        image: catalogue:latest
+        image: 192.168.74.68:5000/catalogue:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
