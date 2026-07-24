@@ -32,6 +32,7 @@ pipeline {
                 script {
                     dir("front-end") {
                         sh "docker build -t ${DOCKER_REGISTRY}/front-end:latest ."
+                        sh "docker push ${DOCKER_REGISTRY}/front-end:latest"
                         sh "trivy image --severity CRITICAL ${DOCKER_REGISTRY}/front-end:latest > ../trivy-front-end.txt"
                     }
                 }
@@ -42,6 +43,7 @@ pipeline {
                 script {
                     dir("catalogue") {
                         sh "docker build -t ${DOCKER_REGISTRY}/catalogue:latest -f docker/catalogue/Dockerfile ."
+                        sh "docker push ${DOCKER_REGISTRY}/catalogue:latest"
                         sh "trivy image --severity CRITICAL ${DOCKER_REGISTRY}/catalogue:latest > ../trivy-catalogue.txt"
                     }
                 }
@@ -52,6 +54,7 @@ pipeline {
                 script {
                     dir("user") {
                         sh "docker build -t ${DOCKER_REGISTRY}/user:latest ."
+                        sh "docker push ${DOCKER_REGISTRY}/user:latest"
                         sh "trivy image --severity CRITICAL ${DOCKER_REGISTRY}/user:latest > ../trivy-user.txt"
                     }
                 }
@@ -62,6 +65,7 @@ pipeline {
                 script {
                     dir("payment") {
                         sh "docker build -t ${DOCKER_REGISTRY}/payment:latest -f docker/payment/Dockerfile ."
+                        sh "docker push ${DOCKER_REGISTRY}/payment:latest"
                         sh "trivy image --severity CRITICAL ${DOCKER_REGISTRY}/payment:latest > ../trivy-payment.txt"
                     }
                 }
