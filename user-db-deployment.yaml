@@ -31,8 +31,7 @@ spec:
               - ALL
       volumes:
       - name: user-db-storage
-        persistentVolumeClaim:
-          claimName: user-db-pvc
+        mountPath: /var/lib/mysql
 ---
 apiVersion: v1
 kind: Service
