@@ -23,15 +23,12 @@ spec:
         - name: user-db-storage
           mountPath: /data/db
         securityContext:
-          allowPrivilegeEscalation: false
           readOnlyRootFilesystem: false # MongoDB needs to write to its data directory
           runAsNonRoot: false # MongoDB image typically runs as root initially
-          capabilities:
-            drop:
-              - ALL
       volumes:
       - name: user-db-storage
-        mountPath: /var/lib/mysql
+        persistentVolumeClaim:
+          claimName: user-db-pvc
 ---
 apiVersion: v1
 kind: Service
