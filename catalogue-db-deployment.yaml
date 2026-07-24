@@ -31,8 +31,7 @@ spec:
               - ALL
       volumes:
       - name: catalogue-db-storage
-        persistentVolumeClaim:
-          claimName: catalogue-db-pvc
+        mountPath: /data/db
 ---
 apiVersion: v1
 kind: Service
