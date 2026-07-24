@@ -97,11 +97,13 @@ pipeline {
     post {
         success {
             script {
-                sh """
-                    curl -X POST -H 'Content-type: application/json' \
-                      --data '{"text":"✅ Pipeline SUCCESS: Sock Shop Microservices deployed successfully!"}' \
-                      ${SLACK_WEBHOOK}
-                """
+                withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK' )]) {
+                    sh '''
+                        curl -X POST -H 'Content-type: application/json' \
+                          --data '{"text":"✅ *Pipeline SUCCESS*\\n*Project:* Sock Shop Microservices\\n*Status:* All services built, scanned, and deployed successfully!"}' \
+                          ${SLACK_WEBHOOK}
+                    '''
+                }
             }
         }
         failure {
@@ -115,17 +117,18 @@ pipeline {
                 sh "cat trivy-payment.txt >> combined-trivy-report.txt 2>/dev/null || true"
                 //sh "tail -n 200 combined-trivy-report.txt | python3 ai/analyzer.py || echo 'AI analysis skipped - quota exceeded or unavailable'"
                 script {
-                    def analysis = sh(script: "tail -n 200 combined-trivy-report.txt | python3 ai/analyzer.py", returnStdout: true).trim()
+                    def analysis = sh(script: "tail -n 200 combined-trivy-report.txt | python3 ai/analyzer.py 2>&1", returnStdout: true).trim()
                     if (analysis.isEmpty()) {
-                        analysis = "AI analysis unavailable - check quota or API key"
+                        analysis = "AI analysis unavailable - check Gemini API quota or key"
                     }
-                    // Escape special characters for JSON
                     def escapedAnalysis = analysis.replace('"', '\\"').replace('\n', '\\n')
-                    sh """
-                        curl -X POST -H 'Content-type: application/json' \
-                          --data '{"text":"🚨 Pipeline FAILED!\\n\\nTrivy Vulnerability Analysis:\\n${escapedAnalysis}"}' \
-                          ${SLACK_WEBHOOK}
-                    """
+                    withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK')]) {
+                        sh """
+                            curl -X POST -H 'Content-type: application/json' \\
+                              --data '{"text":"🚨 *Pipeline FAILED*\\n\\n*Trivy Vulnerability Analysis:*\\n${escapedAnalysis}"}' \\
+                              ${SLACK_WEBHOOK}
+                        """
+                    }
                 }
             }
         }
