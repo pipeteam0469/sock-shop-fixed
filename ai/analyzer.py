@@ -26,5 +26,9 @@ try:
         response = model.generate_content(prompt)
         requests.post(os.environ.get("SLACK_WEBHOOK"), json={"text": f"🚨 *AI Analysis:*\n{response.text}"})
         print(response.text)
+    
+    if __name__ == "__main__":
+        analyze(sys.stdin.read())
+
 except Exception as e:
     print(f"AI analysis unavailable: {e}")
