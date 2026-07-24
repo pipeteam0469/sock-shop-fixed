@@ -77,19 +77,18 @@ pipeline {
                     sh '''
                         export KUBECONFIG=/var/lib/jenkins/.kube/config
                         echo "Deploying to Kubernetes cluster at $(kubectl config view --minify --output 'jsonpath={..server}')..."
+                        kubectl delete deployment front-end catalogue catalogue-db user user-db payment 2>/dev/null || true
                         kubectl apply -f front-end-deployment.yaml
                         kubectl apply -f catalogue-deployment.yaml
                         kubectl apply -f catalogue-db-deployment.yaml
                         kubectl apply -f user-deployment.yaml
                         kubectl apply -f user-db-deployment.yaml
                         kubectl apply -f payment-deployment.yaml
-                        # Force pods to restart and pull latest images
-                        kubectl rollout restart deployment/front-end
-                        kubectl rollout restart deployment/catalogue
-                        kubectl rollout restart deployment/catalogue-db
-                        kubectl rollout restart deployment/user
-                        kubectl rollout restart deployment/user-db
-                        kubectl rollout restart deployment/payment
+                        sleep 10
+                        kubectl rollout status deployment/front-end --timeout=120s
+                        kubectl rollout status deployment/catalogue --timeout=120s
+                        kubectl rollout status deployment/user --timeout=120s
+                        kubectl rollout status deployment/payment --timeout=120s
                     '''
                 }
             }
@@ -105,7 +104,6 @@ pipeline {
                 sh "cat trivy-catalogue.txt >> combined-trivy-report.txt 2>/dev/null || true"
                 sh "cat trivy-user.txt >> combined-trivy-report.txt 2>/dev/null || true"
                 sh "cat trivy-payment.txt >> combined-trivy-report.txt 2>/dev/null || true"
-                // Then run AI analysis
                 sh "tail -n 200 combined-trivy-report.txt | python3 ai/analyzer.py || echo 'AI analysis skipped - quota exceeded or unavailable'"
             }
         }
