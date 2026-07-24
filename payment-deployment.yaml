@@ -17,7 +17,7 @@ spec:
       containers:
       - name: payment
         image: payment:latest
-        imagePullPolicy: Never
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         securityContext:
