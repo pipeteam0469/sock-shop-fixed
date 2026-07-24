@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: user
-        image: user:latest
+        image: 192.168.74.68:5000/user:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
