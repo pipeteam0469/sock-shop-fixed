@@ -44,7 +44,7 @@ pipeline {
                     dir("catalogue") {
                         sh "docker build -t ${DOCKER_REGISTRY}/catalogue:latest -f docker/catalogue/Dockerfile ."
                         sh "docker push ${DOCKER_REGISTRY}/catalogue:latest"
-                        sh "trivy image --severity CRITICAL ${DOCKER_REGISTRY}/catalogue:latest > ../trivy-catalogue.txt"
+                        sh "trivy image --severity CRITICAL --exit-code 0 ${DOCKER_REGISTRY}/catalogue:latest > ../trivy-catalogue.txt"
                     }
                 }
             }
@@ -55,7 +55,7 @@ pipeline {
                     dir("user") {
                         sh "docker build -t ${DOCKER_REGISTRY}/user:latest ."
                         sh "docker push ${DOCKER_REGISTRY}/user:latest"
-                        sh "trivy image --severity CRITICAL ${DOCKER_REGISTRY}/user:latest > ../trivy-user.txt"
+                        sh "trivy image --severity CRITICAL --exit-code 0 ${DOCKER_REGISTRY}/user:latest > ../trivy-user.txt"
                     }
                 }
             }
@@ -66,7 +66,7 @@ pipeline {
                     dir("payment") {
                         sh "docker build -t ${DOCKER_REGISTRY}/payment:latest -f docker/payment/Dockerfile ."
                         sh "docker push ${DOCKER_REGISTRY}/payment:latest"
-                        sh "trivy image --severity CRITICAL ${DOCKER_REGISTRY}/payment:latest > ../trivy-payment.txt"
+                        sh "trivy image --severity CRITICAL --exit-code 0 ${DOCKER_REGISTRY}/payment:latest > ../trivy-payment.txt"
                     }
                 }
             }
@@ -95,6 +95,15 @@ pipeline {
         }
     }
     post {
+        success {
+            script {
+                sh """
+                    curl -X POST -H 'Content-type: application/json' \
+                      --data '{"text":"✅ Pipeline SUCCESS: Sock Shop Microservices deployed successfully!"}' \
+                      ${SLACK_WEBHOOK}
+                """
+            }
+        }
         failure {
             script {
                 // Concatenate all Trivy reports for AI analysis
@@ -104,7 +113,20 @@ pipeline {
                 sh "cat trivy-catalogue.txt >> combined-trivy-report.txt 2>/dev/null || true"
                 sh "cat trivy-user.txt >> combined-trivy-report.txt 2>/dev/null || true"
                 sh "cat trivy-payment.txt >> combined-trivy-report.txt 2>/dev/null || true"
-                sh "tail -n 200 combined-trivy-report.txt | python3 ai/analyzer.py || echo 'AI analysis skipped - quota exceeded or unavailable'"
+                //sh "tail -n 200 combined-trivy-report.txt | python3 ai/analyzer.py || echo 'AI analysis skipped - quota exceeded or unavailable'"
+                script {
+                    def analysis = sh(script: "tail -n 200 combined-trivy-report.txt | python3 ai/analyzer.py", returnStdout: true).trim()
+                    if (analysis.isEmpty()) {
+                        analysis = "AI analysis unavailable - check quota or API key"
+                    }
+                    // Escape special characters for JSON
+                    def escapedAnalysis = analysis.replace('"', '\\"').replace('\n', '\\n')
+                    sh """
+                        curl -X POST -H 'Content-type: application/json' \
+                          --data '{"text":"🚨 Pipeline FAILED!\\n\\nTrivy Vulnerability Analysis:\\n${escapedAnalysis}"}' \
+                          ${SLACK_WEBHOOK}
+                    """
+                }
             }
         }
     }
