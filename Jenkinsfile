@@ -87,7 +87,9 @@ pipeline {
                         sleep 10
                         kubectl rollout status deployment/front-end --timeout=120s
                         kubectl rollout status deployment/catalogue --timeout=120s
+                        kubectl rollout status deployment/catalogue-db --timeout=120s
                         kubectl rollout status deployment/user --timeout=120s
+                        kubectl rollout status deployment/user-db --timeout=120s
                         kubectl rollout status deployment/payment --timeout=120s
                     '''
                 }
