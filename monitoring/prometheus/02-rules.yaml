@@ -1,0 +1,114 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: monitoring
+data:
+  alerts.yaml: |
+    groups:
+    - name: sockshop_alerts
+      rules:
+
+      # Alert 1: High CPU Usage (>80% for 2 minutes)
+      - alert: HighCPUUsage
+        expr: sum(rate(container_cpu_usage_seconds_total{namespace="default", container!="", container!=""}[2m])) by (pod) > 0.8
+        for: 2m
+        labels:
+          severity: warning
+          category: resource
+        annotations:
+          summary: "High CPU usage on pod {{ $labels.pod }}"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using more than 80% CPU for over 2 minutes. Current value: {{ $value | printf \"%.2f\" }} CPU cores."
+          impact: "Service performance degradation, increased latency for users"
+          suggested_action: "Check for infinite loops or heavy computation. Consider increasing CPU limits."
+
+      # Alert 2: High Memory Usage (>80% for 2 minutes)
+      - alert: HighMemoryUsage
+        expr: sum(container_memory_working_set_bytes{namespace="default", container!="", container!=""}) by (pod) / sum(container_spec_memory_limit_bytes{namespace="default", container!="", container!=""}) by (pod) > 0.8
+        for: 2m
+        labels:
+          severity: warning
+          category: resource
+        annotations:
+          summary: "High memory usage on pod {{ $labels.pod }}"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using more than 80% of its memory limit for over 2 minutes. Current usage: {{ $value | humanizePercentage }}."
+          impact: "Pod may be OOMKilled, causing service outage and data loss"
+          suggested_action: "Check for memory leaks. Consider increasing memory limits or optimizing the application."
+
+      # Alert 3: Pod Restarting Frequently (CrashLoopBackOff)
+      - alert: PodCrashLooping
+        expr: increase(kube_pod_container_status_restarts_total{namespace="default"}[15m]) > 3
+        for: 5m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "Pod {{ $labels.pod }} is crash looping"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted {{ $value }} times in the last 15 minutes."
+          impact: "Service is unstable and may be completely unavailable to users"
+          suggested_action: "Check pod logs for error messages. Investigate application bugs or resource constraints."
+
+      # Alert 4: Pod in Pending State
+      - alert: PodPending
+        expr: kube_pod_status_phase{namespace="default", phase="Pending"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          category: availability
+        annotations:
+          summary: "Pod {{ $labels.pod }} is stuck in Pending state"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been in Pending state for more than 5 minutes. This usually indicates scheduling or resource issues."
+          impact: "Service is not running and cannot serve requests"
+          suggested_action: "Check node resources, taints, and PVC availability. Run kubectl describe pod for events."
+
+      # Alert 5: Pod in Failed/Error State
+      - alert: PodFailed
+        expr: kube_pod_status_phase{namespace="default", phase="Failed"} == 1
+        for: 1m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "Pod {{ $labels.pod }} has failed"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is in Failed state. This indicates the container exited with a non-zero exit code."
+          impact: "Complete service outage for this component"
+          suggested_action: "Check pod logs immediately. Investigate application errors and configuration issues."
+
+      # Alert 6: High HTTP Error Rate (5xx errors > 5%)
+      - alert: HighHTTPErrorRate
+        expr: sum(rate(container_cpu_cfs_throttled_periods_total{namespace="default", container!="", container!=""}[5m])) by (pod) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High CPU throttling on pod {{ $labels.pod }}"
+          description: "Pod {{ $labels.pod }} is experiencing significant CPU throttling, which may indicate the service is under-provisioned for its workload."
+          impact: "Increased response times and potential timeout errors for end users"
+          suggested_action: "Increase CPU limits or optimize the application to reduce CPU usage."
+
+      # Alert 7: Kubelet Down (node exporter)
+      - alert: KubeletDown
+        expr: up{job="kubernetes-nodes"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: infrastructure
+        annotations:
+          summary: "Kubelet is down on node {{ $labels.instance }}"
+          description: "Kubelet on node {{ $labels.instance }} is not reporting metrics. The node may be unreachable."
+          impact: "Pods on this node cannot be scheduled or managed. Potential complete node failure."
+          suggested_action: "Check node health with kubectl get nodes. Verify node connectivity and kubelet service status."
+
+      # Alert 8: Pod Memory approaching limit (OOMKill risk)
+      - alert: PodMemoryOOMRisk
+        expr: sum(container_memory_working_set_bytes{namespace="default", container!="", container!=""}) by (pod) / sum(container_spec_memory_limit_bytes{namespace="default", container!="", container!=""}) by (pod) > 0.95
+        for: 1m
+        labels:
+          severity: critical
+          category: resource
+        annotations:
+          summary: "Pod {{ $labels.pod }} is at risk of OOMKill"
+          description: "Pod {{ $labels.pod }} is using more than 95% of its memory limit. An OOMKill is imminent."
+          impact: "Pod will be killed by the kernel, causing immediate service outage"
+          suggested_action: "Increase memory limits immediately. Check for memory leaks in the application."
