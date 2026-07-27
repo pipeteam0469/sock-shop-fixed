@@ -71,6 +71,16 @@ pipeline {
                 }
             }
         }
+        stage("Build AI Alert Service") {
+            steps {
+                script {
+                    dir("monitoring/ai-service") {
+                        sh "docker build -t ${DOCKER_REGISTRY}/ai-service:latest ."
+                        sh "docker push ${DOCKER_REGISTRY}/ai-service:latest"
+                    }
+                }
+            }
+        }
         stage("Deploy to Kubernetes" ) {
             steps {
                 script {
@@ -91,6 +101,42 @@ pipeline {
                         kubectl rollout status deployment/user --timeout=120s
                         kubectl rollout status deployment/user-db --timeout=120s
                         kubectl rollout status deployment/payment --timeout=120s
+                    '''
+                }
+            }
+        }
+        stage("Deploy Monitoring Stack") {
+            steps {
+                script {
+                    sh '''
+                        export KUBECONFIG=/var/lib/jenkins/.kube/config
+                        
+                        # Check if monitoring namespace exists
+                        if ! kubectl get namespace monitoring > /dev/null 2>&1; then
+                            echo "First-time monitoring deployment..."
+                            chmod +x monitoring/deploy.sh
+                            ./monitoring/deploy.sh
+                        else
+                            echo "Monitoring stack exists — updating configuration..."
+                            # Update Prometheus rules
+                            kubectl apply -f monitoring/prometheus/02-rules.yaml
+                            # Update Alertmanager config
+                            kubectl apply -f monitoring/alertmanager/01-configmap.yaml
+                            # Update Grafana dashboards
+                            kubectl apply -f monitoring/grafana/01-dashboards-configmap.yaml
+                            # Update Grafana provisioning
+                            kubectl apply -f monitoring/grafana/02-provisioning-configmap.yaml
+                            # Update AI service secrets
+                            kubectl apply -f monitoring/ai-service/01-deployment.yaml
+                            
+                            # Restart deployments to pick up new configs
+                            kubectl rollout restart deployment/ai-service -n monitoring
+                            kubectl rollout restart deployment/alertmanager -n monitoring
+                            kubectl rollout restart deployment/prometheus -n monitoring
+                        fi
+                        
+                        echo "Monitoring stack deployment complete."
+                        kubectl get pods -n monitoring
                     '''
                 }
             }
